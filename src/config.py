@@ -1,0 +1,9 @@
+import glfw
+import glfw.GLFW as GLFW_CONSTANTS
+from OpenGL.GL import *
+import time
+
+BACKEND_AZDO_OGL = 0
+
+RENDER_BEHAVIOR_EACH_FRAME = 0
+RENDER_BEHAVIOR_CONSERVATIVE = 1
