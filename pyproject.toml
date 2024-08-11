@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "PyKrasue"
+version = "0.0.1"
+authors = [
+    {name="Andrew Mengede", email="amengede27@outlook.com"},
+]
+description = "A GPU accelerated pygame/arcade alternative"
+readme = "readme.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = ["glfw"]
+
+[project.urls]
+Homepage = "https://github.com/amengede/pykrasue"
+Issues = "https://github.com/amengede/pykrasue/issues"
