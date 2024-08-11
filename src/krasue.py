@@ -15,14 +15,13 @@ class Invocation:
         More or less creates a window and rendering backend,
         and gives slots for behavior extension.
     """
-    __slots__ = ("_window", "_frametime")
+    __slots__ = ("_window", "_renderer")
 
     
     def __init__(self, width: int, height: int, 
                  title: str = "A spooky window",
                  backend: int = BACKEND_AZDO_OGL,
-                 behavior: int = RENDER_BEHAVIOR_EACH_FRAME,
-                 frametime: float = 0.0):
+                 behavior: int = RENDER_BEHAVIOR_EACH_FRAME):
         """
             Invoke a krasue (very spooky, your exorcism license is
             up to date, right?)
@@ -43,30 +42,11 @@ class Invocation:
                     or to render conservatively
                     (reduces non-visible renders, frees up CPU time
                     on main thread)
-                
-                frametime: specifies how often to render (in milliseconds)
-                    when rendering conservatively.
         """
         
-        # TODO: abstract the renderer backend out to its own class
-        
-        glfw.init()
-        if (backend == BACKEND_AZDO_OGL):
-            glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MAJOR,4)
-            glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MINOR,5)
-            glfw.window_hint(
-                GLFW_CONSTANTS.GLFW_OPENGL_PROFILE, 
-                GLFW_CONSTANTS.GLFW_OPENGL_CORE_PROFILE)
-            glfw.window_hint(
-                GLFW_CONSTANTS.GLFW_OPENGL_FORWARD_COMPAT, 
-                GLFW_CONSTANTS.GLFW_TRUE)
-        glfw.window_hint(
-            GLFW_CONSTANTS.GLFW_DOUBLEBUFFER, 
-            behavior == RENDER_BEHAVIOR_CONSERVATIVE)
-        
-        self._window = glfw.create_window(width, height, title, None, None)
-        self._frametime = frametime
-        glfw.make_context_current(self._window)
+        if (backend == BACKEND_AZDO_OGL and behavior == RENDER_BEHAVIOR_EACH_FRAME):
+            self._renderer = OpenGLAZDOEveryFrameRenderer()
+            self._window = self._renderer.setup(width, height, title)
     
     def set_clear_color(self, color: tuple[int]) -> None:
         """
@@ -78,10 +58,11 @@ class Invocation:
                     channel is an integer in the range [0, 255]
         """
 
-        glClearColor(
+        color = (
             min(1.0, max(0.0, color[0] / 255)), 
             min(1.0, max(0.0, color[1] / 255)), 
             min(1.0, max(0.0, color[2] / 255)), 1.0)
+        self._renderer.set_clear_color(color)
     
     def set_title(self, title: str) -> None:
         """
@@ -111,9 +92,9 @@ class Invocation:
 
             self.on_update()
 
-            glClear(GL_COLOR_BUFFER_BIT)
+            self._renderer.start_drawing()
             self.on_draw()
-            glFlush()
+            self._renderer.finish_drawing()
 
     def on_update(self) -> None:
         """
@@ -130,3 +111,69 @@ class Invocation:
         """
 
         pass
+
+class OpenGLAZDOEveryFrameRenderer:
+    """
+        Around OpenGL 4.x, a lot of the developments were focussed on improving
+        performance. These "Approaching Zero Driver Overhead" features
+        allowed for faster drawing of arbitrary objects.
+    """
+
+    def setup(self, width: int, height: int, title: str):
+        """
+            Builds a renderer
+
+            Parameters:
+
+                width, height: size of the window
+
+                title: title for the window caption
+
+            Returns:
+
+                The window which will be rendered to
+        """
+        
+        glfw.init()
+        glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MAJOR,4)
+        glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MINOR,5)
+        glfw.window_hint(
+            GLFW_CONSTANTS.GLFW_OPENGL_PROFILE, 
+            GLFW_CONSTANTS.GLFW_OPENGL_CORE_PROFILE)
+        glfw.window_hint(
+            GLFW_CONSTANTS.GLFW_OPENGL_FORWARD_COMPAT, 
+            GLFW_CONSTANTS.GLFW_TRUE)
+        glfw.window_hint(
+            GLFW_CONSTANTS.GLFW_DOUBLEBUFFER, 
+            GLFW_CONSTANTS.GLFW_FALSE)
+        
+        window = glfw.create_window(width, height, title, None, None)
+        glfw.make_context_current(window)
+        return window
+    
+    def set_clear_color(self, color: tuple[float]) -> None:
+        """
+            Sets the color with which to clear the screen upon update.
+
+            Parameters:
+
+                color: the desired clear color, in rgba form, where each
+                    channel is a float in the range [0, 1.0]
+        """
+
+        glClearColor(*color)
+
+    def start_drawing(self) -> None:
+        """
+            Perform any necessary setup before receiving draw commands
+        """
+
+        glClear(GL_COLOR_BUFFER_BIT)
+
+    def finish_drawing(self) -> None:
+        """
+            Called once per frame to draw stuff.
+            Override this function to make your game draw things.
+        """
+
+        glFlush()

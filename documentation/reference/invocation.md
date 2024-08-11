@@ -13,8 +13,7 @@ An Invocation represents top level program control. It more or less creates a wi
 def __init__(self, width: int, height: int, 
             title: str = "A spooky window",
             backend: int = BACKEND_AZDO_OGL,
-            behavior: int = RENDER_BEHAVIOR_EACH_FRAME,
-            frametime: float = 0.0):
+            behavior: int = RENDER_BEHAVIOR_EACH_FRAME):
 ```
 Invokes a krasue (very spooky, your exorcism license is up to date, right?)
 
@@ -22,7 +21,6 @@ Invokes a krasue (very spooky, your exorcism license is up to date, right?)
 * **title**: title for the window caption
 * **backend**: which sort of renderer the window should use
 * **behavior**: how hard to push the renderer. Current options are to draw every frame (good for understanding compute power, but clogs the GPU with non-useful work) or to render conservatively (reduces non-visible renders, frees up CPU time on main thread)
-* **frametime**: specifies how often to render (in milliseconds) when rendering conservatively.
 
 ## Setting the background color
 ```
