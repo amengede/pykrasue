@@ -1,9 +1,16 @@
-<img style="float: left;"  src="https://github.com/amengede/pykrasue/blob/main/logo.jpg" width = 100 display="inline"></img>
-# Krasue
+<img src="header.png"></img>
 Krasue is a high performance alternative to pygame and arcade. Pygame is a wrapper around SDL, which claims to be hardware accelerated, but either isn't or isn't fast enough. Arcade claims to be faster than pygame due to its OpenGL backend, but takes far too long to load and is measurably slower. A simple OpenGL program should outperform both of them, hence Krasue.
-### Instalation
+### Installation
+Fresh install:
 ```
 pip install PyKrasue
 ```
-### Reference
-All source code is documented in this repo, also check out the examples.
+Krasue will be going through frequent updates for the time being, to update an existing installation run:
+```
+pip install --upgrade --force-reinstall PyKrasue
+```
+### Documentation
+[Programming Model](documentation/crash_course.md)
+
+API Reference:
+* [Invocation](documentation/reference/invocation.md)

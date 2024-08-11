@@ -31,7 +31,7 @@ class Invocation:
 
                 width, height: size of the window
 
-                title: title for th window caption
+                title: title for the window caption
 
                 backend: which sort of renderer the window
                     should use
