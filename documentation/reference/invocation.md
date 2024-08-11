@@ -1,14 +1,14 @@
 # krasue.Invocation
 An Invocation represents top level program control. It more or less creates a window and rendering backend, and gives slots for behavior extension.
 
-* [init](#init)
-* [set_clear_color](#set-clear-color)
-* [set_title](#set-title)
-* [run](#run)
-* [on_update](#on-update)
-* [on_draw](#on-draw)
+* init
+* set_clear_color
+* set_title
+* run
+* on_update
+* on_draw
 
-## Initialization {#init}
+## Initialization
 ```
 def __init__(self, width: int, height: int, 
             title: str = "A spooky window",
@@ -24,7 +24,7 @@ Invokes a krasue (very spooky, your exorcism license is up to date, right?)
 * **behavior**: how hard to push the renderer. Current options are to draw every frame (good for understanding compute power, but clogs the GPU with non-useful work) or to render conservatively (reduces non-visible renders, frees up CPU time on main thread)
 * **frametime**: specifies how often to render (in milliseconds) when rendering conservatively.
 
-## Setting the background color{#set-clear-color}
+## Setting the background color
 ```
 def set_clear_color(self, color: tuple[int]) -> None:
 ```
@@ -32,7 +32,7 @@ Sets the color with which to clear the screen upon update.
 
 * **color**: the desired clear color, in rgb form, where each channel is an integer in the range [0, 255]
 
-## Setting the window caption{#set-title}
+## Setting the window caption
 ```
 def set_title(self, title: str) -> None:
 ```
@@ -40,19 +40,19 @@ Sets the title in the window's titlebar.
 
 * **title**: the title for the window.
 
-## Starting execution {#run}
+## Starting execution
 ```
 def run(self) -> None:
 ```
 Start the game's main loop.
 
-## Updating{#on-update}
+## Updating
 ```
 def on_update(self) -> None:
 ```
 Called once per frame to update stuff (and things). Override this function to implement your game's update behavior.
 
-## Drawing{#on-draw}
+## Drawing
 ```
 def on_draw(self) -> None:
 ```
