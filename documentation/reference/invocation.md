@@ -57,4 +57,5 @@ Called once per frame to update stuff (and things). Override this function to im
 def on_draw(self) -> None:
 ```
 Called once per frame to draw stuff. Override this function to make your game draw things.
+
 [readme](../../readme.md)
