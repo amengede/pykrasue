@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: PyKrasue
-Version: 0.0.4
+Version: 0.1.1
 Summary: A GPU accelerated pygame/arcade alternative
 Author-email: Andrew Mengede <amengede27@outlook.com>
 Project-URL: Homepage, https://github.com/amengede/pykrasue
@@ -12,13 +12,27 @@ Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: glfw
+Requires-Dist: PyOpenGL
+Requires-Dist: Pillow
+Requires-Dist: numpy
 
-<img style="float: left;"  src="https://github.com/amengede/pykrasue/blob/main/logo.jpg" width = 100 display="inline"></img>
-# Krasue
+<img src="header.png"></img>
+
 Krasue is a high performance alternative to pygame and arcade. Pygame is a wrapper around SDL, which claims to be hardware accelerated, but either isn't or isn't fast enough. Arcade claims to be faster than pygame due to its OpenGL backend, but takes far too long to load and is measurably slower. A simple OpenGL program should outperform both of them, hence Krasue.
-### Instalation
+
+Note: PyKrasue is still in its early days and is not yet fully featured. Examples are a good indicator of what can currently be done.
+### Installation
+Fresh install:
 ```
 pip install PyKrasue
 ```
-### Reference
-All source code is documented in this repo, also check out the examples.
+Krasue will be going through frequent updates for the time being, to update an existing installation run:
+```
+pip install --upgrade --force-reinstall PyKrasue
+```
+### Documentation
+[Programming Model](documentation/crash_course.md)
+
+API Reference:
+* [Invocation](documentation/reference/invocation.md)
+* [Sprite Group](documentation/reference/sprite_group.md)

@@ -17,3 +17,4 @@ pip install --upgrade --force-reinstall PyKrasue
 
 API Reference:
 * [Invocation](documentation/reference/invocation.md)
+* [Sprite Group](documentation/reference/sprite_group.md)

@@ -1,4 +1,4 @@
-import krasue as ks
+import krasue.krasue as ks
 import time
 
 class Game(ks.Invocation):
