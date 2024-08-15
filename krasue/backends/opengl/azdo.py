@@ -1,4 +1,4 @@
-from common import *
+from .common import *
 
 class Renderer:
     """
@@ -92,30 +92,32 @@ class Renderer:
 
         return i
 
-    def after_setup(self) -> None:
+    def after_setup(self, window) -> None:
         """
             Upload all image handles to the GPU
         """
 
-        self._image_gl_id = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D_ARRAY, self._image_gl_id)
-        glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 
-                       self._max_image_w, self._max_image_h, len(self._image_history))
-        
-        for filename, i in self._image_history.items():
-            with Image.open(filename, mode = "r") as img:
-                w, h = img.size
-                data = bytes(img.convert("RGBA").tobytes())
-                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 
-                                0, 0, i, 
-                                w, h, 0,
-                                GL_RGBA,GL_UNSIGNED_BYTE,data)
-        
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        if len(self._image_history) > 0:
+
+            self._image_gl_id = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D_ARRAY, self._image_gl_id)
+            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 
+                        self._max_image_w, self._max_image_h, len(self._image_history))
+            
+            for filename, i in self._image_history.items():
+                with Image.open(filename, mode = "r") as img:
+                    w, h = img.size
+                    data = bytes(img.convert("RGBA").tobytes())
+                    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 
+                                    0, 0, i, 
+                                    w, h, 0,
+                                    GL_RGBA,GL_UNSIGNED_BYTE,data)
+            
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     
     def start_drawing(self) -> None:
         """
@@ -124,7 +126,7 @@ class Renderer:
 
         glClear(GL_COLOR_BUFFER_BIT)
 
-    def finish_drawing(self) -> None:
+    def finish_drawing(self, window) -> None:
         """
             Called once per frame to draw stuff.
             Override this function to make your game draw things.

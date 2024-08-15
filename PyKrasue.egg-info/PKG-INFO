@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: PyKrasue
-Version: 0.1.1
+Version: 0.1.4
 Summary: A GPU accelerated pygame/arcade alternative
 Author-email: Andrew Mengede <amengede27@outlook.com>
 Project-URL: Homepage, https://github.com/amengede/pykrasue

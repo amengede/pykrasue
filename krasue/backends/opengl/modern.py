@@ -1,14 +1,14 @@
-from common import *
+from .common import *
 
 class Renderer:
     """
         OpenGL 3.3 renderer. Can do instanced rendering but not indirect.
     """
 
-    __slots__ = (
-        "_max_image_w ", "_max_image_h", "_image_history", "_image_sizes", 
-        "_sprite_groups", "_image_gl_id", "_dummy_vao", "_shader",
-        "_global_info_location")
+    #__slots__ = (
+    #    "_max_image_w ", "_max_image_h", "_image_history", "_image_sizes", 
+    #    "_sprite_groups", "_image_gl_id", "_dummy_vao", "_shader",
+    #    "_global_info_location")
 
     def setup(self, width: int, height: int, title: str):
         """
@@ -105,26 +105,28 @@ class Renderer:
                 window: the glfw window we'll be rendering to.
         """
 
-        self._image_gl_id = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D_ARRAY, self._image_gl_id)
-        glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 
-                       self._max_image_w, self._max_image_h, len(self._image_history))
-        
-        for filename, i in self._image_history.items():
-            with Image.open(filename, mode = "r") as img:
-                w, h = img.size
-                img = img.convert("RGBA")
-                img_data = bytes(img.tobytes())
-                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 
-                                0, 0, i, 
-                                w, h, 1,
-                                GL_RGBA,GL_UNSIGNED_BYTE,img_data)
-        
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        if (len(self._image_history) > 0):
+
+            self._image_gl_id = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D_ARRAY, self._image_gl_id)
+            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 
+                        self._max_image_w, self._max_image_h, len(self._image_history))
+            
+            for filename, i in self._image_history.items():
+                with Image.open(filename, mode = "r") as img:
+                    w, h = img.size
+                    img = img.convert("RGBA")
+                    img_data = bytes(img.tobytes())
+                    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 
+                                    0, 0, i, 
+                                    w, h, 1,
+                                    GL_RGBA,GL_UNSIGNED_BYTE,img_data)
+            
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
         vertex_src = """
 #version 330
