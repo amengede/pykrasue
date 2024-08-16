@@ -37,6 +37,9 @@ class Renderer:
         glfw.window_hint(
             GLFW_CONSTANTS.GLFW_DOUBLEBUFFER, 
             GLFW_CONSTANTS.GLFW_FALSE)
+        glfw.window_hint(
+            GLFW_CONSTANTS.GLFW_RESIZABLE,
+            GLFW_CONSTANTS.GLFW_FALSE)
         
         window = glfw.create_window(width, height, title, None, None)
         glfw.make_context_current(window)
