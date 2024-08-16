@@ -57,6 +57,11 @@ class Renderer:
         self._object_info_location = 0
         self._sprite_info_location = 0
 
+        glEnable(GL_STENCIL_TEST)
+        glStencilMask(0xFF)
+        glStencilFunc(GL_EQUAL, 0, 0xFF)
+        glStencilOp(GL_KEEP, GL_INCR, GL_INCR)
+
         return window
     
     def set_clear_color(self, color: tuple[float]) -> None:
@@ -218,29 +223,30 @@ void main() {
             Perform any necessary setup before receiving draw commands
         """
 
-        glClear(GL_COLOR_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
     def register_sprite_group(self, object_types: np.ndarray, 
                               transforms: np.ndarray, size: int) -> None:
         
         buffer = np.zeros(7 * size, np.float32)
         for i in range(size):
-            #object_type
-            object_type = object_types[i]
+            read_pos = size - 1 - i
+            write_pos = 7 * i
+            object_type = object_types[read_pos]
             #image size: x
-            buffer[7 * i]       = self._image_sizes[2*object_type]
+            buffer[write_pos]       = self._image_sizes[2*object_type]
             #image size: y
-            buffer[7 * i + 1]   = self._image_sizes[2*object_type + 1]
-            buffer[7 * i + 2]   = object_type
+            buffer[write_pos + 1]   = self._image_sizes[2*object_type + 1]
+            buffer[write_pos + 2]   = object_type
 
             #center: x
-            buffer[7 * i + 3]   = transforms[4*i]
+            buffer[write_pos + 3]   = transforms[4*read_pos]
             #center: y
-            buffer[7 * i + 4]   = transforms[4*i + 1]
+            buffer[write_pos + 4]   = transforms[4*read_pos + 1]
             #scale
-            buffer[7 * i + 5]   = transforms[4*i + 2]
+            buffer[write_pos + 5]   = transforms[4*read_pos + 2]
             #rotation
-            buffer[7 * i + 6]   = transforms[4*i + 3]
+            buffer[write_pos + 6]   = transforms[4*read_pos + 3]
         
         VAO = glGenVertexArrays(1)
         glBindVertexArray(VAO)
