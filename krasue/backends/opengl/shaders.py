@@ -1,7 +1,3 @@
-import glfw
-import glfw.GLFW as GLFW_CONSTANTS
-from PIL import Image
-import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 

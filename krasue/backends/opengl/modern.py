@@ -1,14 +1,18 @@
-from .common import *
+import numpy as np
+from .shaders import *
+from .texture_atlas import TextureAtlas
+from ..data_types import *
+from krasue.config import *
 
 class Renderer:
     """
         OpenGL 3.3 renderer. Can do instanced rendering but not indirect.
     """
-
-    #__slots__ = (
-    #    "_max_image_w ", "_max_image_h", "_image_history", "_image_sizes", 
-    #    "_sprite_groups", "_image_gl_id", "_dummy_vao", "_shader",
-    #    "_global_info_location")
+    __slots__ = (
+        "_atlas", "_sprite_groups", "_dummy_vao", 
+        "_shader", "_global_info_location",
+        "_shader", "_dummy_vao", "_global_info_location")
+    
 
     def setup(self, width: int, height: int, title: str):
         """
@@ -25,45 +29,55 @@ class Renderer:
                 The window which will be rendered to
         """
         
-        glfw.init()
-        glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MAJOR,3)
-        glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MINOR,3)
-        glfw.window_hint(
-            GLFW_CONSTANTS.GLFW_OPENGL_PROFILE, 
-            GLFW_CONSTANTS.GLFW_OPENGL_CORE_PROFILE)
-        glfw.window_hint(
-            GLFW_CONSTANTS.GLFW_OPENGL_FORWARD_COMPAT, 
-            GLFW_CONSTANTS.GLFW_TRUE)
-        glfw.window_hint(
-            GLFW_CONSTANTS.GLFW_DOUBLEBUFFER, 
-            GLFW_CONSTANTS.GLFW_FALSE)
-        glfw.window_hint(
-            GLFW_CONSTANTS.GLFW_RESIZABLE,
-            GLFW_CONSTANTS.GLFW_FALSE)
-        
-        window = glfw.create_window(width, height, title, None, None)
-        glfw.make_context_current(window)
+        self._set_up_pygame(width, height, title)
+        self._make_objects()
+        self._set_up_opengl()
 
-        self._max_image_w = 0
-        self._max_image_h = 0
-        self._image_history: dict[str, int] = {}
-        self._image_sizes = np.zeros(0, dtype = np.uint32)
+    def _set_up_pygame(self, width: int, height: int, title: str) -> any:
+        """
+            Initialize glfw, build a new window.
+
+            Parameters:
+
+                width, height: size of the window
+
+                title: title for the window caption
+
+            Returns:
+
+                The window which will be rendered to
+        """
+
+        pg.init()
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION,3)
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION,3)
+        pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, 
+                                    pg.GL_CONTEXT_PROFILE_CORE)
+        pg.display.set_mode((width, height), pg.OPENGL|pg.DOUBLEBUF)
+        pg.display.set_caption(title)
+    
+    def _make_objects(self) -> None:
+        """
+            Construct renderer objects
+        """
+
+        self._atlas = TextureAtlas()
         self._sprite_groups = []
 
-        self._image_gl_id = 0
         self._dummy_vao = 0
         self._shader = 0
         self._global_info_location = 0
-        self._object_info_location = 0
-        self._sprite_info_location = 0
+    
+    def _set_up_opengl(self) -> None:
+        """
+            Configure any one-time OpenGL setup.
+        """
 
         glEnable(GL_STENCIL_TEST)
         glStencilMask(0xFF)
         glStencilFunc(GL_EQUAL, 0, 0xFF)
         glStencilOp(GL_KEEP, GL_INCR, GL_INCR)
 
-        return window
-    
     def set_clear_color(self, color: tuple[float]) -> None:
         """
             Sets the color with which to clear the screen upon update.
@@ -90,21 +104,9 @@ class Renderer:
                 within the set of loaded images.
         """
 
-        if filename in self._image_history:
-            return self._image_history[filename]
-
-        i = len(self._image_history)
-        self._image_history[filename] = i
-
-        with Image.open(filename, mode = "r") as img:
-            w, h = img.size
-            self._image_sizes = np.append(self._image_sizes, (w / 2, h / 2))
-            self._max_image_w = max(w, self._max_image_w)
-            self._max_image_h = max(h, self._max_image_h)
-
-        return i
+        return self._atlas.load_image(filename)
     
-    def after_setup(self, window) -> None:
+    def after_setup(self) -> None:
         """
             Upload all image handles to the GPU
 
@@ -113,37 +115,17 @@ class Renderer:
                 window: the glfw window we'll be rendering to.
         """
 
-        if (len(self._image_history) > 0):
-
-            self._image_gl_id = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D_ARRAY, self._image_gl_id)
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 
-                        self._max_image_w, self._max_image_h, len(self._image_history))
-            
-            for filename, i in self._image_history.items():
-                with Image.open(filename, mode = "r") as img:
-                    w, h = img.size
-                    img = img.convert("RGBA")
-                    img_data = bytes(img.tobytes())
-                    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 
-                                    0, 0, i, 
-                                    w, h, 1,
-                                    GL_RGBA,GL_UNSIGNED_BYTE,img_data)
-            
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_REPEAT)
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT)
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT)
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        self._atlas.build()
 
         vertex_src = """
 #version 330
 uniform vec4 screenSize_maxSize;
 layout(location=0) in vec2 imageSize;
-layout(location=1) in float objectType;
-layout(location=2) in vec2 center;
-layout(location=3) in float scale;
-layout(location=4) in float rotation;
+layout(location=1) in vec2 texOffset;
+layout(location=2) in float layer;
+layout(location=3) in vec2 center;
+layout(location=4) in float scale;
+layout(location=5) in float rotation;
 
 out vec3 fragTexCoord;
 
@@ -172,17 +154,19 @@ void main() {
     pos = pos + center;
 
     //convert to NDC
-    //pos = (pos - screenSize_maxSize.xy);
     pos.x = (pos.x - screenSize_maxSize.x) / screenSize_maxSize.x;
     pos.y = (pos.y - screenSize_maxSize.y) / screenSize_maxSize.y;
 
     gl_Position = vec4(pos, 0.0, 1.0);
 
-    pos = 0.5 * (coords[gl_VertexID] + vec2(1.0));
-    pos.x = pos.x * imageSize.x / screenSize_maxSize.z;
-    pos.y = pos.y * imageSize.y / screenSize_maxSize.w;
-    pos.y = pos.y * -1;
-    fragTexCoord = vec3(pos, objectType);
+    vec2 offset;
+    offset.x = texOffset.x / 4096.0;
+    offset.y = texOffset.y / 4096.0;
+    vec2 size = 0.5 * (coords[gl_VertexID] + vec2(1.0));
+    size.x = (size.x * imageSize.x) / screenSize_maxSize.z;
+    size.y = (size.y * imageSize.y) / screenSize_maxSize.w;
+    //pos.y = pos.y * -1;
+    fragTexCoord = vec3(offset + size, layer);
 }
 """
 
@@ -214,8 +198,9 @@ void main() {
         glUseProgram(self._shader)
         self._global_info_location = glGetUniformLocation(self._shader, "screenSize_maxSize")
 
-        w,h = glfw.get_framebuffer_size(window)
-        global_info = np.array((w / 2, h / 2, self._max_image_w / 2, self._max_image_h / 2), dtype=np.uint32)
+        w,h = pg.display.get_window_size()
+        max_w, max_h = self._atlas.get_max_size()
+        global_info = np.array((w / 2, h / 2, max_w / 2, max_h / 2), dtype=np.uint32)
         glUniform4fv(self._global_info_location, 1, global_info)
 
     def start_drawing(self) -> None:
@@ -228,52 +213,69 @@ void main() {
     def register_sprite_group(self, object_types: np.ndarray, 
                               transforms: np.ndarray, size: int) -> None:
         
-        buffer = np.zeros(7 * size, np.float32)
+        buffer = np.zeros(size, DATA_TYPE_VERTEX)
         for i in range(size):
-            read_pos = size - 1 - i
-            write_pos = 7 * i
-            object_type = object_types[read_pos]
-            #image size: x
-            buffer[write_pos]       = self._image_sizes[2*object_type]
-            #image size: y
-            buffer[write_pos + 1]   = self._image_sizes[2*object_type + 1]
-            buffer[write_pos + 2]   = object_type
 
-            #center: x
-            buffer[write_pos + 3]   = transforms[4*read_pos]
-            #center: y
-            buffer[write_pos + 4]   = transforms[4*read_pos + 1]
-            #scale
-            buffer[write_pos + 5]   = transforms[4*read_pos + 2]
-            #rotation
-            buffer[write_pos + 6]   = transforms[4*read_pos + 3]
+            read_pos = size - 1 - i
+            object_type = object_types[read_pos]
+            
+            w, h = self._atlas.get_image_size(object_type)
+            buffer[i]['imageSize_x']   = w
+            buffer[i]['imageSize_y']   = h
+
+            x,y,z = self._atlas.get_offset(object_type)
+            buffer[i]['texoffset_x']   = x
+            buffer[i]['texoffset_y']   = y
+            buffer[i]['layer']         = z
+
+            buffer[i]['center_x']   = transforms[read_pos]['x']
+            buffer[i]['center_y']   = transforms[read_pos]['y']
+            buffer[i]['scale']      = transforms[read_pos]['scale']
+            buffer[i]['rotation']   = transforms[read_pos]['rotation']
         
         VAO = glGenVertexArrays(1)
         glBindVertexArray(VAO)
         VBO = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, VBO)
 
-        glBufferData(GL_ARRAY_BUFFER, size * 28, buffer, GL_STATIC_DRAW)
+        stride = DATA_TYPE_VERTEX.itemsize
+        offset = 0
+        glBufferData(GL_ARRAY_BUFFER, size * stride, buffer, GL_STATIC_DRAW)
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 28, ctypes.c_void_p(0))
+        # layout(location=0) in vec2 imageSize;
+        glVertexAttribPointer(0, 2, GL_HALF_FLOAT, GL_FALSE, stride, ctypes.c_void_p(offset))
         glEnableVertexAttribArray(0)
         glVertexAttribDivisor(0,1)
+        offset += 4
 
-        glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 28, ctypes.c_void_p(8))
+        # layout(location=1) in vec2 texOffset;
+        glVertexAttribPointer(1, 2, GL_HALF_FLOAT, GL_FALSE, stride, ctypes.c_void_p(offset))
         glEnableVertexAttribArray(1)
         glVertexAttribDivisor(1,1)
+        offset += 4
 
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 28, ctypes.c_void_p(12))
+        # layout(location=2) in float layer;
+        glVertexAttribPointer(2, 1, GL_UNSIGNED_BYTE, GL_FALSE, stride, ctypes.c_void_p(offset))
         glEnableVertexAttribArray(2)
         glVertexAttribDivisor(2,1)
+        offset += 1
 
-        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 28, ctypes.c_void_p(20))
+        # layout(location=3) in vec2 center;
+        glVertexAttribPointer(3, 2, GL_HALF_FLOAT, GL_FALSE, stride, ctypes.c_void_p(offset))
         glEnableVertexAttribArray(3)
         glVertexAttribDivisor(3,1)
+        offset += 4
 
-        glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 28, ctypes.c_void_p(24))
+        # layout(location=4) in float scale;
+        glVertexAttribPointer(4, 1, GL_HALF_FLOAT, GL_FALSE, stride, ctypes.c_void_p(offset))
         glEnableVertexAttribArray(4)
         glVertexAttribDivisor(4,1)
+        offset += 2
+
+        # layout(location=5) in float rotation;
+        glVertexAttribPointer(5, 1, GL_HALF_FLOAT, GL_FALSE, stride, ctypes.c_void_p(offset))
+        glEnableVertexAttribArray(5)
+        glVertexAttribDivisor(5,1)
 
         id = len(self._sprite_groups)
         self._sprite_groups.append((VAO, VBO, size))
@@ -296,11 +298,9 @@ void main() {
         glBindVertexArray(VAO)
         glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, size)
 
-    def finish_drawing(self, window) -> None:
+    def finish_drawing(self) -> None:
         """
             Called once per frame to draw stuff.
             Override this function to make your game draw things.
         """
-
-        glFlush()
-        #glfw.swap_buffers(window)
+        pg.display.flip()

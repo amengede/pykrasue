@@ -1,9 +1,8 @@
-import glfw
-import glfw.GLFW as GLFW_CONSTANTS
-from PIL import Image
+from .config import *
 import numpy as np
 import krasue.backends.opengl.modern as ogl_modern
 import krasue.backends.opengl.azdo as ogl_azdo
+from krasue.backends.data_types import *
 
 BACKEND_AZDO_OGL = 0
 BACKEND_MODERN_OGL = 1
@@ -17,7 +16,7 @@ class Invocation:
         More or less creates a window and rendering backend,
         and gives slots for behavior extension.
     """
-    __slots__ = ("_window", "_renderer")
+    __slots__ = ("_renderer", )
 
     
     def __init__(self, width: int, height: int, 
@@ -48,13 +47,13 @@ class Invocation:
         
         if (backend == BACKEND_AZDO_OGL and behavior == RENDER_BEHAVIOR_EACH_FRAME):
             self._renderer = ogl_azdo.Renderer()
-            self._window = self._renderer.setup(width, height, title)
+            self._renderer.setup(width, height, title)
         if (backend == BACKEND_MODERN_OGL and behavior == RENDER_BEHAVIOR_EACH_FRAME):
             self._renderer = ogl_modern.Renderer()
-            self._window = self._renderer.setup(width, height, title)
+            self._renderer.setup(width, height, title)
         
         self.on_setup()
-        self._renderer.after_setup(self._window)
+        self._renderer.after_setup()
 
     def on_setup(self) -> None:
         """
@@ -63,18 +62,17 @@ class Invocation:
 
         pass
     
-    def load_image(self, filename: str) -> int:
+    def new_object(self, filename: str) -> int:
         """
-            Loads an image into memory.
+            Creates a new object.
 
             Parameters:
 
-                filename: full filepath to the image to load.
+                filename: full filepath to associated image.
             
             Returns:
 
-                A handle to the loaded image, indicating the image's position
-                within the set of loaded images.
+                The ID of the new object.
         """
 
         return self._renderer.load_image(filename)
@@ -104,28 +102,27 @@ class Invocation:
                 title: the title for the window.
         """
 
-        glfw.set_window_title(self._window, title)
+        pg.display.set_caption(title)
 
     def run(self) -> None:
         """
             Start the game's main loop.
         """
 
-        while (not glfw.window_should_close(self._window)):
+        running = True
+        while (running):
 
-            if (glfw.get_key(
-                self._window, 
-                GLFW_CONSTANTS.GLFW_KEY_ESCAPE) == GLFW_CONSTANTS.GLFW_PRESS):
-
-                glfw.set_window_should_close(self._window, GLFW_CONSTANTS.GLFW_TRUE)
-            
-            glfw.poll_events()
+            for event in pg.event.get():
+                if event.type == pg.KEYDOWN \
+                    and event.key == pg.K_ESCAPE:
+                
+                    running = False
 
             self.on_update()
 
             self._renderer.start_drawing()
             self.on_draw()
-            self._renderer.finish_drawing(self._window)
+            self._renderer.finish_drawing()
 
     def on_update(self) -> None:
         """
@@ -179,7 +176,7 @@ class SpriteGroup:
         self._renderer = invocation._renderer
         
         self._object_types = np.zeros(1, dtype=np.uint32)
-        self._transforms = np.zeros(4, dtype=np.float32)
+        self._transforms = np.zeros(1, dtype=DATA_TYPE_TRANSFORM)
 
         self._size = 0
         self._capacity = 1
@@ -209,21 +206,21 @@ class SpriteGroup:
         #resize if needed
         if self._size >= self._capacity:
             new_object_types = np.zeros(self._capacity * 2, dtype=np.uint32)
-            new_object_types[0:self._size] = self._object_types[:]
+            new_object_types[:self._size] = self._object_types[:]
             self._object_types = new_object_types
 
-            new_transforms = np.zeros(self._capacity * 8, dtype=np.float32)
-            new_transforms[0:self._size * 4] = self._transforms[:]
+            new_transforms = np.zeros(self._capacity * 2, dtype=DATA_TYPE_TRANSFORM)
+            new_transforms[:self._size] = self._transforms[:]
             self._transforms = new_transforms
 
             self._capacity = len(self._object_types)
         
         #insert
         self._object_types[i] = object_type
-        self._transforms[4 * i] = x
-        self._transforms[4 * i + 1] = y
-        self._transforms[4 * i + 2] = scale
-        self._transforms[4 * i + 3] = rotate
+        self._transforms[i]['x'] = x
+        self._transforms[i]['y'] = y
+        self._transforms[i]['scale'] = scale
+        self._transforms[i]['rotation'] = rotate
         self._size += 1
 
         return i

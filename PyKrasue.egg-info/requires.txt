@@ -1,4 +1,4 @@
-glfw
+pygame-ce
 PyOpenGL
 Pillow
 numpy
