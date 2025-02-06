@@ -5,6 +5,7 @@ import numpy as np
 IMAGE_NAMES = (
     "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o",
     "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "za", "zb", "zc", "zd")
+OBJECT_COUNT = 1024
 
 class Game(ks.Invocation):
 
@@ -22,22 +23,20 @@ class Game(ks.Invocation):
         self.current_time = time.time()
         self.fps = 0
 
-        images = []
+        IDs = []
         for name in IMAGE_NAMES:
             filename = f"../sprites/{name}.png"
-            images.append(self.load_image(filename))
+            IDs.append(self.new_object(filename))
         
         self.sprite_group = ks.SpriteGroup(self)
-        object_count = 128
-        for i in range(object_count):
+        for _ in range(OBJECT_COUNT):
             x = np.random.randint(0, 1280)
             y = np.random.randint(0, 800)
             scale = np.random.uniform(0.05, 0.15)
             theta = np.random.randint(0, 360)
-            object_type = images[np.random.randint(0, len(IMAGE_NAMES))]
+            object_type = np.random.choice(IDs)
             self.sprite_group.add(object_type, x, y, scale, theta)
         self.sprite_group.inscribe()
-
 
     def on_update(self) -> None:
 

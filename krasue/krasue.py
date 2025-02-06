@@ -4,6 +4,9 @@ import krasue.backends.opengl.modern as ogl_modern
 import krasue.backends.opengl.azdo as ogl_azdo
 from krasue.backends.data_types import *
 
+import os
+os.environ["SDL_VIDEO_X11_FORCE_EGL"] = "1"
+
 BACKEND_AZDO_OGL = 0
 BACKEND_MODERN_OGL = 1
 

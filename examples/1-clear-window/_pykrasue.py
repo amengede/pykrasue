@@ -6,7 +6,7 @@ class Game(ks.Invocation):
     
     def __init__(self, width: int, height: int):
         
-        super().__init__(width, height)
+        super().__init__(width, height, backend=ks.BACKEND_MODERN_OGL)
         self.set_clear_color((32, 64, 64))
 
         # timing

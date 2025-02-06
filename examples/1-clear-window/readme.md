@@ -2,8 +2,10 @@
 Nothing exciting, just filling the screen with a solid color.
 
 ## Performance:
-| Machine              | Pygame   | PyKrasue (AZDO OpenGL) | PyKrasue (Modern OpenGL) |
-|---|---:|---:|---:|
-| Asus Craptop          |  320 fps |  650 fps | 500 fps |
-| Lenovo ThinkPad T490s | 475 fps | 850 fps | 850 fps |
-| Gaming PC (RTX 3070)  | 1400 fps | 8700 fps | 8500 fps |
+| Machine              | Pygame   | PyKrasue (Modern OpenGL) |
+|---|---:|---:|
+| Yoga | 75 fps | 380 fps |
+| Asus | 500 fps | 700 fps |
+| ThinkPad | 650 fps | 1900 fps |
+| MSI | 1400 fps | 1900 fps |
+| Brewery | 1700 fps | 4300 fps |

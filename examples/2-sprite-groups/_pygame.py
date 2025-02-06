@@ -20,7 +20,7 @@ for name in IMAGE_NAMES:
     h = int(0.1 * raw_rect.height)
     images[name] = pg.transform.scale(raw_surface, (w,h))
 
-object_count = 128
+object_count = 1024
 objects = []
 for i in range(object_count):
     x = np.random.randint(0, 1280)
