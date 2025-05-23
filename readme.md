@@ -10,7 +10,7 @@ pip install PyKrasue
 ```
 Krasue will be going through frequent updates for the time being, to update an existing installation run:
 ```
-pip install --upgrade --force-reinstall PyKrasue
+pip install --upgrade PyKrasue
 ```
 ### Documentation
 [Programming Model](documentation/crash_course.md)
